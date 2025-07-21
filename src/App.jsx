@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Login from './components/Login';
@@ -6,6 +6,7 @@ import Signup from './components/Signup';
 import MovieList from './components/MovieList';
 import { getCurrentUser } from './api/auth';
 import './App.css';
+import './index.css';
 
 function App() {
   const [user, setUser] = useState(null);
