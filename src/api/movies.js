@@ -15,14 +15,14 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
-export const getMovies = () =>
-  instance.get('/api/movies').then((response) => ({
-    ...response,
-    data: Array.isArray(response.data)
-      ? response.data
-      : response.data.movies || [],
-  }));
+export const getMovies = () => instance.get('/api/movies').then((response) => ({
+  ...response,
+  data: Array.isArray(response.data) ? response.data : response.data.movies || [],
+}));
 export const createMovie = (data) => instance.post('/api/movies', data);
-export const updateMovie = (id, data) =>
-  instance.put(`/api/movies/${id}`, data);
+export const updateMovie = (id, data) => instance.put(`/api/movies/${id}`, data);
 export const deleteMovie = (id) => instance.delete(`/api/movies/${id}`);
+export const getGenres = () => instance.get('/api/genres').then((response) => ({
+  ...response,
+  data: Array.isArray(response.data) ? response.data : response.data.genres || [],
+}));
