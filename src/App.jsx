@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Login from './components/Login';
@@ -6,23 +6,36 @@ import Signup from './components/Signup';
 import MovieList from './components/MovieList';
 import { getCurrentUser } from './api/auth';
 import './App.css';
-import './index.css';
+import './index.css'; // Ensure you have Tailwind CSS imported
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   // Check if user is logged in on mount
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await getCurrentUser();
-        setUser(response.data);
+        if (response.data && response.data.email) {
+          setUser(response.data); // Only set user if valid data is returned
+        } else {
+          setUser(null);
+        }
       } catch (error) {
-        setUser(null);
+        console.error('Error fetching user:', error);
+        setUser(null); // Ensure user is null on error
+      } finally {
+        setIsLoading(false); // Set loading to false after fetch
       }
     };
     fetchUser();
   }, []);
+
+  // Show loading state while fetching user
+  if (isLoading) {
+    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <Router>

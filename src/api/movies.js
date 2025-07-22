@@ -1,22 +1,27 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.REACT_APP_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const instance = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
 });
 
-// Add JWT token to requests
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('Sending request to:', config.url, 'with token:', token); // Debug
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['x-auth-token'] = token;
   }
   return config;
 });
 
-export const getMovies = () => instance.get('/api/movies');
+export const getMovies = () =>
+  instance.get('/api/movies').then((response) => ({
+    ...response,
+    data: Array.isArray(response.data)
+      ? response.data
+      : response.data.movies || [],
+  }));
 export const createMovie = (data) => instance.post('/api/movies', data);
 export const updateMovie = (id, data) =>
   instance.put(`/api/movies/${id}`, data);
