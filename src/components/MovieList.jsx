@@ -6,6 +6,7 @@ import {
   deleteMovie,
   getGenres,
 } from '../api/movies';
+import { useNavigate } from 'react-router-dom';
 
 function MovieList() {
   const [movies, setMovies] = useState([]);
@@ -17,6 +18,7 @@ function MovieList() {
   const [selectedMovieId, setSelectedMovieId] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,8 +27,8 @@ function MovieList() {
           getMovies(),
           getGenres(),
         ]);
-        console.log('getMovies response:', moviesResponse.data); // Debug
-        console.log('getGenres response:', genresResponse.data); // Debug
+        console.log('getMovies response:', moviesResponse.data);
+        console.log('getGenres response:', genresResponse.data);
         setMovies(
           Array.isArray(moviesResponse.data) ? moviesResponse.data : []
         );
@@ -38,11 +40,12 @@ function MovieList() {
           'Error fetching data:',
           error.response?.data || error.message
         );
-        setError(
-          error.response?.status === 401
-            ? 'Unauthorized. Please log in.'
-            : 'Failed to fetch data. Please try again.'
-        );
+        if (error.response?.status === 401) {
+          setError('Unauthorized. Please log in.');
+          navigate('/login');
+        } else {
+          setError('Failed to fetch data. Please try again.');
+        }
         setMovies([]);
         setGenres([]);
       } finally {
@@ -50,18 +53,18 @@ function MovieList() {
       }
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const movieData = {
         title,
-        genre: genreId, // Send genreId as a string (ObjectId)
+        genre: genreId,
         numberInStock: Number(numberInStock),
         dailyRentalRate: Number(dailyRentalRate),
       };
-      console.log('Submitting movie:', movieData); // Debug
+      console.log('Submitting movie:', movieData);
       if (selectedMovieId) {
         const response = await updateMovie(selectedMovieId, movieData);
         setMovies(
@@ -104,45 +107,126 @@ function MovieList() {
 
   const handleEdit = (movie) => {
     setTitle(movie.title);
-    setGenreId(movie.genre._id); // Use genre._id
+    setGenreId(movie.genre._id);
     setNumberInStock(movie.numberInStock);
     setDailyRentalRate(movie.dailyRentalRate);
     setSelectedMovieId(movie._id);
   };
 
   return (
-    <div className='mt-10'>
-      <h2 className='text-2xl font-bold mb-4 text-blue-400'>Manage Movies</h2>
-      {error && <p className='text-red-500 mb-4'>{error}</p>}
+    <div className='py-8'>
+      <h2 className='text-2xl font-semibold text-gray-900 mb-6 text-center'>
+        Manage Movies
+      </h2>
+      {error && (
+        <p className='text-red-500 mb-6 text-sm font-medium'>{error}</p>
+      )}
+      <form
+        onSubmit={handleSubmit}
+        className='mb-8 max-w-md mx-auto bg-white p-6 rounded-md shadow-sm card'
+      >
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-medium mb-1'>
+            Movie Title
+          </label>
+          <input
+            type='text'
+            placeholder='Enter movie title'
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className='w-full p-3 border border-gray-200 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-medium mb-1'>
+            Genre
+          </label>
+          <select
+            value={genreId}
+            onChange={(e) => setGenreId(e.target.value)}
+            className='w-full p-3 border border-gray-200 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          >
+            <option value=''>Select Genre</option>
+            {genres.map((genre) => (
+              <option key={genre._id} value={genre._id}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-medium mb-1'>
+            Number in Stock
+          </label>
+          <input
+            type='number'
+            placeholder='Enter stock'
+            value={numberInStock}
+            onChange={(e) => setNumberInStock(e.target.value)}
+            min='0'
+            max='255'
+            className='w-full p-3 border border-gray-200 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+        <div className='mb-4'>
+          <label className='block text-gray-700 text-sm font-medium mb-1'>
+            Daily Rental Rate
+          </label>
+          <input
+            type='number'
+            placeholder='Enter rental rate'
+            value={dailyRentalRate}
+            onChange={(e) => setDailyRentalRate(e.target.value)}
+            min='0'
+            max='255'
+            className='w-full p-3 border border-gray-200 rounded-md text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          />
+        </div>
+        <button
+          type='submit'
+          className='w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-500 text-sm font-medium transition'
+        >
+          {selectedMovieId ? 'Update Movie' : 'Add Movie'}
+        </button>
+      </form>
+      <h3 className='text-xl font-semibold text-gray-900 mb-4 text-center'>
+        Movie List
+      </h3>
       {isLoading ? (
-        <p className='text-gray-400'>Loading movies...</p>
+        <p className='text-gray-500 text-sm font-medium'>Loading movies...</p>
       ) : movies.length === 0 ? (
-        <p className='text-gray-400'>No movies found.</p>
+        <p className='text-gray-500 text-sm font-medium'>
+          No movies found. Add a movie above.
+        </p>
       ) : (
-        <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+        <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {movies.map((movie) => (
             <li
               key={movie._id}
-              className='bg-gray-800 p-4 rounded-lg shadow-md'
+              className='bg-white p-6 rounded-md border border-gray-200 hover:shadow-md transition-shadow'
             >
-              <h3 className='text-lg font-semibold'>{movie.title}</h3>
-              <p className='text-gray-400'>
+              <h3 className='text-lg font-semibold text-gray-900'>
+                {movie.title}
+              </h3>
+              <p className='text-gray-500 text-sm'>
                 Genre: {movie.genre?.name || 'Unknown'}
               </p>
-              <p className='text-gray-400'>Stock: {movie.numberInStock}</p>
-              <p className='text-gray-400'>
+              <p className='text-gray-500 text-sm'>
+                Stock: {movie.numberInStock}
+              </p>
+              <p className='text-gray-500 text-sm'>
                 Daily Rental Rate: ${movie.dailyRentalRate}
               </p>
-              <div className='mt-2 flex gap-2'>
+              <div className='mt-4 flex gap-3 w-full'>
                 <button
                   onClick={() => handleEdit(movie)}
-                  className='bg-yellow-600 px-3 py-1 rounded-md hover:bg-yellow-500'
+                  className='cursor-pointer bg-gray-200 text-gray-900 px-4 py-2 rounded-md hover:bg-black hover:text-white text-sm font-medium transition flex-3'
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(movie._id)}
-                  className='bg-red-600 px-3 py-1 rounded-md hover:bg-red-500'
+                  className='cursor-pointer bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-500 text-sm font-medium transition flex-1'
                 >
                   Delete
                 </button>
@@ -151,54 +235,6 @@ function MovieList() {
           ))}
         </ul>
       )}
-      <form
-        onSubmit={handleSubmit}
-        className='mb-8 flex flex-col gap-4 max-w-md'
-      >
-        <input
-          type='text'
-          placeholder='Movie Title'
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className='p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-400'
-        />
-        <select
-          value={genreId}
-          onChange={(e) => setGenreId(e.target.value)}
-          className='p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-400'
-        >
-          <option value=''>Select Genre</option>
-          {genres.map((genre) => (
-            <option key={genre._id} value={genre._id}>
-              {genre.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type='number'
-          placeholder='Number in Stock'
-          value={numberInStock}
-          onChange={(e) => setNumberInStock(e.target.value)}
-          min='0'
-          max='255'
-          className='p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-400'
-        />
-        <input
-          type='number'
-          placeholder='Daily Rental Rate'
-          value={dailyRentalRate}
-          onChange={(e) => setDailyRentalRate(e.target.value)}
-          min='0'
-          max='255'
-          className='p-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-400'
-        />
-        <button
-          type='submit'
-          className='bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-500'
-        >
-          {selectedMovieId ? 'Update Movie' : 'Add Movie'}
-        </button>
-      </form>
     </div>
   );
 }
