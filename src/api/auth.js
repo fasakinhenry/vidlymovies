@@ -30,5 +30,8 @@ instance.interceptors.response.use(
 
 export const register = (data) => instance.post('/api/users', data);
 export const login = (data) => instance.post('/api/auth/', data);
-export const logout = () => instance.post('/api/auth/logout');
+export const logout = () => {
+  localStorage.removeItem('token');
+  return Promise.resolve();
+};
 export const getCurrentUser = () => instance.get('/api/users/me');
