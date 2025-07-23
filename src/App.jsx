@@ -20,30 +20,39 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      const token = localStorage.getItem('token');
+      
+      // If no token exists, don't try to fetch user
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await getCurrentUser();
-        console.log('getCurrentUser response:', response.data); // Debug
+        console.log('getCurrentUser response:', response.data);
+        
         if (response.data && response.data.email) {
           setUser(response.data);
         } else {
           setUser(null);
-          setError('No user data returned. Please log in.');
+          localStorage.removeItem('token'); // Remove invalid token
         }
       } catch (error) {
-        console.error(
-          'Error fetching user:',
-          error.response?.data || error.message
-        );
-        setError(
-          error.response?.status === 401
-            ? 'Unauthorized. Please log in.'
-            : 'Failed to verify user. Please log in.'
-        );
+        console.error('Error fetching user:', error.response?.data || error.message);
+        
+        // If unauthorized, remove the invalid token
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+        }
+        
         setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchUser();
   }, []);
 
@@ -60,11 +69,6 @@ function App() {
       <div className='min-h-screen bg-white text-gray-900'>
         <Header user={user} setUser={setUser} />
         <main className='container mx-auto px-4 py-8 max-w-7xl'>
-          {error && (
-            <p className='text-red-500 text-center mb-6 text-sm font-medium'>
-              {error}
-            </p>
-          )}
           <Routes>
             <Route
               path='/login'
