@@ -15,6 +15,19 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle token expiration
+instance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const register = (data) => instance.post('/api/users', data);
 export const login = (data) => instance.post('/api/auth/', data);
 export const logout = () => instance.post('/api/auth/logout');
